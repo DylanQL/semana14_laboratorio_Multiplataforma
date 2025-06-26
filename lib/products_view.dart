@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:semana14_laboratorio/product_model.dart';
 import 'package:semana14_laboratorio/product_database.dart';
 import 'package:semana14_laboratorio/product_details_view.dart';
@@ -57,7 +57,7 @@ class _ProductsViewState extends State<ProductsView> {
   goToProductDetailsView({int? id}) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => ProductDetailsView(productId: id)),
+      CupertinoPageRoute(builder: (context) => ProductDetailsView(productId: id)),
     );
     refreshProducts();
   }
@@ -71,11 +71,24 @@ class _ProductsViewState extends State<ProductsView> {
     final difference = expirationDate.difference(now).inDays;
 
     if (difference < 0) {
-      return Colors.red[100]!; // Expired
+      return CupertinoColors.systemRed.withOpacity(0.1);
     } else if (difference <= 7) {
-      return Colors.orange[100]!; // Expires soon
+      return CupertinoColors.systemOrange.withOpacity(0.1);
     } else {
-      return Colors.green[100]!; // Safe
+      return CupertinoColors.systemGreen.withOpacity(0.1);
+    }
+  }
+
+  Color _getExpirationBorderColor(DateTime expirationDate) {
+    final now = DateTime.now();
+    final difference = expirationDate.difference(now).inDays;
+
+    if (difference < 0) {
+      return CupertinoColors.systemRed;
+    } else if (difference <= 7) {
+      return CupertinoColors.systemOrange;
+    } else {
+      return CupertinoColors.systemGreen;
     }
   }
 
@@ -84,173 +97,213 @@ class _ProductsViewState extends State<ProductsView> {
     final difference = expirationDate.difference(now).inDays;
 
     if (difference < 0) {
-      return Icons.error; // Expired
+      return CupertinoIcons.exclamationmark_circle_fill;
     } else if (difference <= 7) {
-      return Icons.warning; // Expires soon
+      return CupertinoIcons.clock_fill;
     } else {
-      return Icons.check_circle; // Safe
+      return CupertinoIcons.checkmark_circle_fill;
+    }
+  }
+
+  String _getExpirationText(DateTime expirationDate) {
+    final now = DateTime.now();
+    final difference = expirationDate.difference(now).inDays;
+
+    if (difference < 0) {
+      return 'Vencido hace ${(-difference)} días';
+    } else if (difference == 0) {
+      return 'Vence hoy';
+    } else if (difference <= 7) {
+      return 'Vence en $difference días';
+    } else {
+      return 'Vence: ${_formatDate(expirationDate)}';
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text('Gestión de Productos'),
-        backgroundColor: Colors.blue[600],
-        foregroundColor: Colors.white,
-        elevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: searchController,
-              onChanged: _filterProducts,
-              decoration: InputDecoration(
-                hintText: 'Buscar productos...',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground,
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: CupertinoColors.systemBackground.withOpacity(0.9),
+        border: const Border(
+          bottom: BorderSide(
+            color: CupertinoColors.separator,
+            width: 0.5,
+          ),
+        ),
+        middle: const Text(
+          'Productos',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: goToProductDetailsView,
+          child: const Icon(
+            CupertinoIcons.add,
+            size: 24,
           ),
         ),
       ),
-      body: Center(
-        child: filteredProducts.isEmpty
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.inventory_2_outlined,
-                    size: 80,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    products.isEmpty ? 'No hay productos registrados' : 'No se encontraron productos',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 18,
-                    ),
-                  ),
-                ],
-              )
-            : ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: filteredProducts.length,
-                itemBuilder: (context, index) {
-                  final product = filteredProducts[index];
-                  return GestureDetector(
-                    onTap: () => goToProductDetailsView(id: product.id),
-                    child: Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: _getExpirationColor(product.fechaVencimiento),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      product.nombre,
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  Icon(
-                                    _getExpirationIcon(product.fechaVencimiento),
-                                    color: _getExpirationColor(product.fechaVencimiento) == Colors.red[100]
-                                        ? Colors.red
-                                        : _getExpirationColor(product.fechaVencimiento) == Colors.orange[100]
-                                            ? Colors.orange[700]
-                                            : Colors.green,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                product.descripcion,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[700],
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Vence: ${_formatDate(product.fechaVencimiento)}',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Creado: ${_formatDate(product.createdTime!)}',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue[600],
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      '\$${product.precio.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Search bar
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: CupertinoColors.systemBackground,
+              child: CupertinoSearchTextField(
+                controller: searchController,
+                onChanged: _filterProducts,
+                placeholder: 'Buscar productos...',
+                style: const TextStyle(fontSize: 16),
+              ),
+            ),
+            // Products list
+            Expanded(
+              child: filteredProducts.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            products.isEmpty 
+                                ? CupertinoIcons.cube_box 
+                                : CupertinoIcons.search,
+                            size: 80,
+                            color: CupertinoColors.placeholderText,
                           ),
-                        ),
+                          const SizedBox(height: 16),
+                          Text(
+                            products.isEmpty 
+                                ? 'No hay productos registrados'
+                                : 'No se encontraron productos',
+                            style: const TextStyle(
+                              color: CupertinoColors.placeholderText,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          if (products.isEmpty)
+                            const Text(
+                              'Toca + para agregar tu primer producto',
+                              style: TextStyle(
+                                color: CupertinoColors.placeholderText,
+                                fontSize: 14,
+                              ),
+                            ),
+                        ],
                       ),
-                    ),
-                  );
-                }),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: goToProductDetailsView,
-        backgroundColor: Colors.blue[600],
-        foregroundColor: Colors.white,
-        tooltip: 'Crear Producto',
-        child: const Icon(Icons.add),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: filteredProducts.length,
+                      itemBuilder: (context, index) {
+                        final product = filteredProducts[index];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: CupertinoButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: () => goToProductDetailsView(id: product.id),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: _getExpirationColor(product.fechaVencimiento),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: _getExpirationBorderColor(product.fechaVencimiento),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            product.nombre,
+                                            style: const TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w700,
+                                              color: CupertinoColors.label,
+                                            ),
+                                          ),
+                                        ),
+                                        Icon(
+                                          _getExpirationIcon(product.fechaVencimiento),
+                                          color: _getExpirationBorderColor(product.fechaVencimiento),
+                                          size: 24,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      product.descripcion,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        color: CupertinoColors.secondaryLabel,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              _getExpirationText(product.fechaVencimiento),
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: _getExpirationBorderColor(product.fechaVencimiento),
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Agregado: ${_formatDate(product.createdTime!)}',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: CupertinoColors.tertiaryLabel,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: CupertinoColors.systemBlue,
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          child: Text(
+                                            '\$${product.precio.toStringAsFixed(2)}',
+                                            style: const TextStyle(
+                                              color: CupertinoColors.white,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+            ),
+          ],
+        ),
       ),
     );
   }

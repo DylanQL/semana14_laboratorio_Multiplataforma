@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:semana14_laboratorio/products_view.dart';
 
 void main() {
@@ -10,13 +10,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return CupertinoApp(
       title: 'Gestión de Productos',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+      theme: const CupertinoThemeData(
+        primaryColor: CupertinoColors.systemBlue,
+        scaffoldBackgroundColor: CupertinoColors.systemGroupedBackground,
+        barBackgroundColor: CupertinoColors.systemBackground,
+        brightness: Brightness.light,
       ),
       home: const ProductsView(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
